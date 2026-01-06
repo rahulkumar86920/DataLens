@@ -1,0 +1,21 @@
+# scraper/requirements.txt
+# Python Dependencies for DataLens Web Scraper
+
+# Core Dependencies
+beautifulsoup4==4.12.2      # HTML parsing
+requests==2.31.0            # HTTP library
+lxml==4.9.3                 # XML/HTML parser (faster)
+
+# Utilities
+python-dotenv==1.0.0        # Environment variables
+urllib3==2.1.0              # HTTP client
+
+# Optional (for advanced features)
+selenium==4.15.2            # JavaScript rendering (if needed)
+pandas==2.1.3               # Data manipulation
+schedule==1.2.0             # Job scheduling
+
+# Development
+pytest==7.4.3               # Testing
+black==23.11.0              # Code formatting
+flake8==6.1.0               # Linting
