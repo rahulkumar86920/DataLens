@@ -258,73 +258,14 @@ Before you begin, ensure you have the following installed:
 
 ## 📦 Installation
 
-### Method 1: Automated Setup (Recommended)
 
-#### Step 1: Clone the Repository
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/datalens.git
-
-# Navigate to project directory
-cd datalens
-```
-
-#### Step 2: Run Setup Script
-
-**On Mac/Linux:**
-```bash
-chmod +x setup.sh
-./setup.sh
-```
-
-**On Windows:**
-```bash
-# Open Git Bash or WSL
-bash setup.sh
-```
-
-The script will:
-- ✅ Check prerequisites
-- ✅ Install backend dependencies
-- ✅ Install frontend dependencies
-- ✅ Setup Python virtual environment
-- ✅ Create `.env` files from templates
-- ✅ Display next steps
-
-#### Step 3: Configure Environment Variables
-
-Follow the [Configuration](#-configuration) section below to set up:
-1. MongoDB Atlas
-2. Google OAuth
-3. Environment variables
-
-#### Step 4: Start Development
-
-```bash
-# Terminal 1: Backend
-cd backend
-npm run dev
-
-# Terminal 2: Frontend
-cd frontend
-npm start
-
-# Terminal 3: Scraper
-cd scraper
-source venv/bin/activate  # Mac/Linux
-venv\Scripts\activate     # Windows
-python src/main.py
-```
-
----
-
-### Method 2: Manual Setup
+### Manual Setup
 
 #### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/datalens.git
+git clone https://github.com/rahulkumar86920/DataLens.git
 cd datalens
 ```
 
