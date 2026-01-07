@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-connectDB();
+await connectDB();
 
 // Middleware
 app.use(helmet()); // Security headers

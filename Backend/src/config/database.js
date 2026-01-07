@@ -3,53 +3,46 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 
-/**
- * MongoDB Connection Configuration
- * Connects to MongoDB Atlas or local instance
- */
+// Global cache for serverless
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  try {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error('❌ MONGODB_URI is not defined');
+  }
+
+  if (!cached.promise) {
     const options = {
-      // Use new URL parser
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      
-      // Connection pool settings
       maxPoolSize: 10,
-      minPoolSize: 2,
-      
-      // Timeout settings
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      
-      // Retry settings
       retryWrites: true,
       retryReads: true,
     };
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI, options);
-
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-    logger.info(`Database: ${conn.connection.name}`);
-
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected. Attempting to reconnect...');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected successfully');
-    });
-
-    return conn;
-  } catch (error) {
-    logger.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1);
+    cached.promise = mongoose
+      .connect(process.env.MONGODB_URI, options)
+      .then((mongooseInstance) => {
+        logger.info('✅ MongoDB connected');
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        logger.error('❌ MongoDB connection error:', err);
+        throw err;
+      });
   }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
 };
 
 module.exports = connectDB;
