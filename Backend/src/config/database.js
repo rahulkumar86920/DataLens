@@ -1,7 +1,7 @@
 // backend/src/config/database.js
 
-const mongoose = require('mongoose');
-const logger = require('../utils/logger');
+import mongoose from "mongoose";
+import logger from "../utils/logger.js";
 
 // Global cache for serverless
 let cached = global.mongoose;
@@ -16,7 +16,7 @@ const connectDB = async () => {
   }
 
   if (!process.env.MONGODB_URI) {
-    throw new Error('❌ MONGODB_URI is not defined');
+    throw new Error("❌ MONGODB_URI is not defined");
   }
 
   if (!cached.promise) {
@@ -31,12 +31,12 @@ const connectDB = async () => {
     cached.promise = mongoose
       .connect(process.env.MONGODB_URI, options)
       .then((mongooseInstance) => {
-        logger.info('✅ MongoDB connected');
+        logger.info("✅ MongoDB connected");
         return mongooseInstance;
       })
       .catch((err) => {
         cached.promise = null;
-        logger.error('❌ MongoDB connection error:', err);
+        logger.error("❌ MongoDB connection error:", err);
         throw err;
       });
   }
@@ -45,4 +45,4 @@ const connectDB = async () => {
   return cached.conn;
 };
 
-module.exports = connectDB;
+export default connectDB;

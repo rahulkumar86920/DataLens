@@ -1,6 +1,6 @@
 // backend/src/models/ScrapedItem.js
 
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 /**
  * Scraped Item Schema
@@ -8,7 +8,6 @@ const mongoose = require('mongoose');
  */
 const scrapedItemSchema = new mongoose.Schema(
   {
-    // Story rank on HN front page
     rank: {
       type: Number,
       required: true,
@@ -16,7 +15,6 @@ const scrapedItemSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Story title
     title: {
       type: String,
       required: true,
@@ -24,85 +22,73 @@ const scrapedItemSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
-    // Story URL
     link: {
       type: String,
       required: true,
       trim: true,
       validate: {
         validator: function (v) {
-          // Basic URL validation
           return /^https?:\/\/.+/.test(v);
         },
         message: (props) => `${props.value} is not a valid URL!`,
       },
     },
 
-    // Story points (upvotes)
     points: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Number of comments
     comments: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Timestamp when data was scraped
     scrapedAt: {
       type: Date,
       default: Date.now,
       index: true,
     },
 
-    // Domain extracted from link
     domain: {
       type: String,
-      default: '',
+      default: "",
     },
 
-    // Data source (for future multi-source support)
     source: {
       type: String,
-      enum: ['hackernews', 'other'],
-      default: 'hackernews',
+      enum: ["hackernews", "other"],
+      default: "hackernews",
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt
+    timestamps: true,
     versionKey: false,
   }
 );
 
-// Indexes for performance
+// Indexes
 scrapedItemSchema.index({ rank: 1 });
 scrapedItemSchema.index({ scrapedAt: -1 });
 scrapedItemSchema.index({ points: -1 });
 
-/**
- * Pre-save middleware
- * Extract domain from link
- */
-scrapedItemSchema.pre('save', function (next) {
+// Pre-save: extract domain
+scrapedItemSchema.pre("save", function (next) {
   if (this.link) {
     try {
       const url = new URL(this.link);
-      this.domain = url.hostname.replace('www.', '');
+      this.domain = url.hostname.replace("www.", "");
     } catch (error) {
-      console.error('Error extracting domain:', error);
+      console.error("Error extracting domain:", error);
     }
   }
   next();
 });
 
-/**
- * Virtual field: Time since scraped
- */
-scrapedItemSchema.virtual('timeSinceScraped').get(function () {
+// Virtual: time since scraped
+scrapedItemSchema.virtual("timeSinceScraped").get(function () {
   const now = new Date();
   const diff = now - this.scrapedAt;
   const minutes = Math.floor(diff / 60000);
@@ -112,38 +98,28 @@ scrapedItemSchema.virtual('timeSinceScraped').get(function () {
   if (days > 0) return `${days}d ago`;
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
-  return 'just now';
+  return "just now";
 });
 
-/**
- * Static method: Get top stories by points
- */
+// Static: top stories
 scrapedItemSchema.statics.getTopStories = function (limit = 10) {
-  return this.find()
-    .sort({ points: -1 })
-    .limit(limit)
-    .select('-__v');
+  return this.find().sort({ points: -1 }).limit(limit).select("-__v");
 };
 
-/**
- * Static method: Clean old data
- * Keeps only the latest scrape
- */
+// Static: clean old data
 scrapedItemSchema.statics.cleanOldData = async function () {
   const latestScrape = await this.findOne().sort({ scrapedAt: -1 });
-  
+
   if (latestScrape) {
     const cutoffDate = latestScrape.scrapedAt;
     const result = await this.deleteMany({ scrapedAt: { $lt: cutoffDate } });
     return result.deletedCount;
   }
-  
+
   return 0;
 };
 
-/**
- * Instance method: Format for frontend
- */
+// Instance method
 scrapedItemSchema.methods.toClient = function () {
   return {
     id: this._id,
@@ -158,5 +134,4 @@ scrapedItemSchema.methods.toClient = function () {
   };
 };
 
-// Export model
-module.exports = mongoose.model('ScrapedItem', scrapedItemSchema);
+export default mongoose.model("ScrapedItem", scrapedItemSchema);

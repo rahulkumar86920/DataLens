@@ -1,21 +1,22 @@
 // backend/src/controllers/dataController.js
 
-const ScrapedItem = require("../models/ScrapedItem");
-const logger = require("../utils/logger");
-const { spawn } = require("child_process");
-const path = require("path");
+import ScrapedItem from "../models/ScrapedItem.js";
+import logger from "../utils/logger.js";
+import { spawn } from "child_process";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
- * Receive Scraped Data from Python Scraper
- *
- * @route POST /api/scrape
- * @access Public (called by scraper)
+ * Receive Scraped Data
  */
-exports.receiveScrapedData = async (req, res) => {
+const receiveScrapedData = async (req, res) => {
   try {
     const { items } = req.body;
 
-    // Validation
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -23,23 +24,18 @@ exports.receiveScrapedData = async (req, res) => {
       });
     }
 
-    // Validate item structure
-    const validItems = items.filter((item) => {
-      return item.title && item.link && item.rank;
-    });
+    const validItems = items.filter((item) => item.title && item.link && item.rank);
 
-    if (validItems.length === 0) {
+    if (!validItems.length) {
       return res.status(400).json({
         success: false,
         message: "No valid items found in request",
       });
     }
 
-    // Clear old data (keep only latest scrape)
     await ScrapedItem.deleteMany({});
     logger.info("Cleared old scraped data");
 
-    // Insert new scraped items
     const savedItems = await ScrapedItem.insertMany(
       validItems.map((item) => ({
         rank: item.rank,
@@ -60,7 +56,6 @@ exports.receiveScrapedData = async (req, res) => {
     });
   } catch (error) {
     logger.error("Error receiving scraped data:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to save scraped data",
@@ -70,31 +65,22 @@ exports.receiveScrapedData = async (req, res) => {
 };
 
 /**
- * Get All Scraped Data
- *
- * @route GET /api/data
- * @access Private (requires authentication)
+ * Get All Data
  */
-exports.getAllData = async (req, res) => {
+const getAllData = async (req, res) => {
   try {
-    // Parse query parameters for pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 30;
     const skip = (page - 1) * limit;
 
-    // Fetch data with pagination
     const items = await ScrapedItem.find()
-      .sort({ rank: 1 }) // Sort by rank ascending
+      .sort({ rank: 1 })
       .skip(skip)
       .limit(limit)
-      .select("-__v"); // Exclude version key
+      .select("-__v");
 
-    // Get total count for pagination
     const totalCount = await ScrapedItem.countDocuments();
-
-    // Get last scrape time
     const latestItem = await ScrapedItem.findOne().sort({ scrapedAt: -1 });
-    const lastScrapedAt = latestItem ? latestItem.scrapedAt : null;
 
     logger.info(`Fetched ${items.length} items for user: ${req.user.email}`);
 
@@ -107,11 +93,10 @@ exports.getAllData = async (req, res) => {
         totalItems: totalCount,
         itemsPerPage: limit,
       },
-      lastScrapedAt,
+      lastScrapedAt: latestItem ? latestItem.scrapedAt : null,
     });
   } catch (error) {
     logger.error("Error fetching data:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch data",
@@ -122,12 +107,8 @@ exports.getAllData = async (req, res) => {
 
 /**
  * Trigger Manual Scrape
- * Runs Python scraper script
- *
- * @route POST /api/scrape/trigger
- * @access Private (requires authentication)
  */
-exports.triggerScrape = async (req, res) => {
+const triggerScrape = async (req, res) => {
   let responded = false;
 
   try {
@@ -136,7 +117,6 @@ exports.triggerScrape = async (req, res) => {
     const pythonCmd = process.platform === "win32" ? "python" : "python3";
     const scraperPath = path.join(__dirname, "../../../scraper/src/main.py");
 
-    const fs = require("fs");
     if (!fs.existsSync(scraperPath)) {
       return res.status(500).json({
         success: false,
@@ -163,13 +143,11 @@ exports.triggerScrape = async (req, res) => {
       logger.error(`Scraper error: ${data.toString().trim()}`);
     });
 
-    // ⏱️ Timeout handler
     const timeout = setTimeout(() => {
       if (!responded) {
         responded = true;
         pythonProcess.kill();
         logger.error("Scraper timed out after 60 seconds");
-
         return res.status(504).json({
           success: false,
           message: "Scraper timed out",
@@ -177,10 +155,8 @@ exports.triggerScrape = async (req, res) => {
       }
     }, 60000);
 
-    // ✅ Process finished
     pythonProcess.on("close", async (code) => {
       if (responded) return;
-
       responded = true;
       clearTimeout(timeout);
 
@@ -203,15 +179,12 @@ exports.triggerScrape = async (req, res) => {
       });
     });
 
-    // ❌ Spawn error
     pythonProcess.on("error", (error) => {
       if (responded) return;
-
       responded = true;
       clearTimeout(timeout);
 
       logger.error("Failed to start scraper:", error);
-
       return res.status(500).json({
         success: false,
         message: "Failed to start scraper. Make sure Python is installed.",
@@ -221,10 +194,9 @@ exports.triggerScrape = async (req, res) => {
     });
   } catch (error) {
     if (responded) return;
-
     responded = true;
-    logger.error("Error triggering scrape:", error);
 
+    logger.error("Error triggering scrape:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to trigger scrape",
@@ -234,17 +206,13 @@ exports.triggerScrape = async (req, res) => {
 };
 
 /**
- * Get Scraping Statistics
- *
- * @route GET /api/data/stats
- * @access Private
+ * Get Statistics
  */
-exports.getStats = async (req, res) => {
+const getStats = async (req, res) => {
   try {
     const totalItems = await ScrapedItem.countDocuments();
     const latestItem = await ScrapedItem.findOne().sort({ scrapedAt: -1 });
 
-    // Calculate average points
     const avgPoints = await ScrapedItem.aggregate([
       {
         $group: {
@@ -266,7 +234,6 @@ exports.getStats = async (req, res) => {
     });
   } catch (error) {
     logger.error("Error fetching stats:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch statistics",
@@ -274,3 +241,5 @@ exports.getStats = async (req, res) => {
     });
   }
 };
+
+export default { receiveScrapedData, getAllData, triggerScrape, getStats };

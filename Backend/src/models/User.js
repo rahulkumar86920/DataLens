@@ -1,6 +1,6 @@
 // backend/src/models/User.js
 
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 /**
  * User Schema
@@ -8,7 +8,6 @@ const mongoose = require('mongoose');
  */
 const userSchema = new mongoose.Schema(
   {
-    // Google unique identifier
     googleId: {
       type: String,
       required: true,
@@ -16,7 +15,6 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
-    // User email from Google
     email: {
       type: String,
       required: true,
@@ -31,44 +29,38 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    // User full name
     name: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // Google profile picture URL
     picture: {
       type: String,
-      default: '',
+      default: "",
     },
 
-    // User role (for future RBAC implementation)
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
 
-    // Account status
     isActive: {
       type: Boolean,
       default: true,
     },
 
-    // Last login timestamp
     lastLogin: {
       type: Date,
       default: Date.now,
     },
 
-    // User preferences (extensible for future features)
     preferences: {
       theme: {
         type: String,
-        enum: ['light', 'dark', 'auto'],
-        default: 'light',
+        enum: ["light", "dark", "auto"],
+        default: "light",
       },
       notifications: {
         type: Boolean,
@@ -77,19 +69,16 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt
+    timestamps: true,
     versionKey: false,
   }
 );
 
-// Indexes for performance optimization
+// Indexes
 userSchema.index({ email: 1 });
 userSchema.index({ createdAt: -1 });
 
-/**
- * Instance method: Get public user profile
- * Removes sensitive information before sending to client
- */
+// Instance method
 userSchema.methods.getPublicProfile = function () {
   return {
     id: this._id,
@@ -101,18 +90,13 @@ userSchema.methods.getPublicProfile = function () {
   };
 };
 
-/**
- * Static method: Find user by Google ID
- */
+// Static method
 userSchema.statics.findByGoogleId = function (googleId) {
   return this.findOne({ googleId, isActive: true });
 };
 
-/**
- * Pre-save middleware
- * Logs user creation
- */
-userSchema.pre('save', function (next) {
+// Pre-save middleware
+userSchema.pre("save", function (next) {
   if (this.isNew) {
     console.log(`New user registered: ${this.email}`);
   }
@@ -120,4 +104,4 @@ userSchema.pre('save', function (next) {
 });
 
 // Export model
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model("User", userSchema);
