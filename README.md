@@ -12,7 +12,7 @@
 
 **A production-ready, full-stack web scraping dashboard with Google OAuth authentication, real-time data scraping, and beautiful React UI.**
 
-[🌐 Live Demo](#) | [📖 Documentation](#table-of-contents) | [🐛 Report Bug](https://github.com/yourusername/datalens/issues) | [✨ Request Feature](https://github.com/yourusername/datalens/issues)
+[🌐 Live Demo](https://data-lens-tau.vercel.app/) | [📖 Documentation](#table-of-contents) | [🐛 Report Bug](https://github.com/yourusername/datalens/issues) | [✨ Request Feature](https://github.com/yourusername/datalens/issues)
 
 </div>
 
