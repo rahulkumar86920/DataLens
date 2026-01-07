@@ -26,8 +26,7 @@
 - [Architecture](#-architecture)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
-  - [Method 1: Automated Setup](#method-1-automated-setup-recommended)
-  - [Method 2: Manual Setup](#method-2-manual-setup)
+  - [Method : Manual Setup](#method-manual-setup)
 - [Configuration](#-configuration)
   - [MongoDB Atlas Setup](#1-mongodb-atlas-setup)
   - [Google OAuth Setup](#2-google-oauth-20-setup)
@@ -981,3 +980,5 @@ GOOGLE_CLIENT_SECRET=your-client-secret
 3. **Add Environment Variables:**
 ```
 REACT_APP_API
+# Backend API URL
+REACT_APP_API_URL=http://localhost:5000
